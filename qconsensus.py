@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 import scipy.stats
 import random
 
-PNUM = 10
-DOMAIN = 5
+PNUM = 5
+DOMAIN = 10
 SAMPLE_SIZE = 1000
-TEST_NUM = 30
-SIGMA = 1
+TEST_NUM = 50
+
 
 
 def initialize_input():
@@ -33,7 +33,6 @@ def generate_option(v, num):
     next = mid + 1
     option[mid] = v
     next_value  = v+1
-
     while next != mid:
         if next_value == num:
             next_value = 0
@@ -46,25 +45,29 @@ def generate_option(v, num):
     return  option
 
 
-def decide(inputs, prob):
+def decide(inputs, prob, mode):
     decisions = []
     #decide based on a normal distribution
     for v in inputs:
-        option = generate_option(v, DOMAIN)
+        if mode:
+            option = generate_option(v, DOMAIN)
+        else:
+            option = list(range(DOMAIN))
         decisions.append(random.choices(population=option, weights=list(prob))[0])
     return decisions
 
-def simulate_different_sigma():
+def simulate_different_sigma(input_oriented):
     probs = []
-    for sigma in [0.01, 0.5,  5]:
+    sigmas = [0.01, 0.5, 5]
+    for sigma in sigmas:
         c = np.random.normal(0, sigma, 1000)
         prob, _, _ = plt.hist(c, DOMAIN, density=True)
         probs.append(prob)
         plt.clf()
 
-
-
-    for prob in probs:
+    for i in range(len(sigmas)):
+        prob = probs[i]
+        sigma = sigmas[i]
         xaxis = []
         yaxis = []
         for j in range(TEST_NUM):
@@ -72,10 +75,9 @@ def simulate_different_sigma():
             a_count = 0
             for i in range(SAMPLE_SIZE):
                 inputs = initialize_input()
-                decisions = decide(inputs, prob)
+                decisions = decide(inputs, prob, input_oriented)
                 v_count += is_valid(inputs, decisions)
                 a_count += is_agreement(decisions)
-
             v_rate = v_count / SAMPLE_SIZE
             a_rate = a_count / SAMPLE_SIZE
             xaxis.append(a_rate)
@@ -84,13 +86,19 @@ def simulate_different_sigma():
             print(v_rate,a_rate)
 
         plt.scatter(xaxis,yaxis)
-        plt.plot(np.unique(xaxis), np.poly1d(np.polyfit(xaxis, yaxis, 1))(np.unique(xaxis)))
+        plt.plot(np.unique(xaxis), np.poly1d(np.polyfit(xaxis, yaxis, 1))(np.unique(xaxis)),  label=str(sigma))
+        plt.legend()
+
 
     plt.show()
 
 
 
+
+
+
+
 if __name__ == '__main__':
-    simulate_different_sigma()
+    simulate_different_sigma(0)
 
 
